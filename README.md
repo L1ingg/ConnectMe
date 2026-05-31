@@ -2,23 +2,6 @@
 
 This repository contains a small microservice suite used by the ConnectMe project. The following services are included (each service has its own README with more details):
 
-# Quick start
-
-1. Create an `.env` (or export env vars) with required secrets, for example:
-
-```
-DB_USER=postgres
-DB_PASSWORD=postgres
-TOKEN_SIGNING_KEY=<base64-key>
-BOT_TOKEN=<discord-bot-token>
-```
-
-2. Run everything with Docker Compose from the repository root:
-
-```bash
-docker-compose up --build
-```
-
 ## Services & infrastructure
 
 - PostgreSQL (db)
@@ -26,15 +9,6 @@ docker-compose up --build
 - Kafka (broker) - used to propagate linking confirmation events between the Discord bot and the linking service
 - Nginx (nginx) - reverse proxy and CORS config, exposed on host port 8080
 
-# Environment variables
-
-The `docker-compose.yml` contains the full list of environment variables used by services. Important ones:
-
-- `DB_USER`, `DB_PASSWORD` - Postgres credentials
-- `TOKEN_SIGNING_KEY` - Base64 signing key used to create JWT tokens in `auth-service`
-- `BOT_TOKEN` - Discord bot token for `discord-bot-service`
-
-Endpoints summary
 
 ## Auth Service
 
