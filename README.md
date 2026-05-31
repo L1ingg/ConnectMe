@@ -1,107 +1,68 @@
-# ConnectMe
+# ConnectMe — Project Overview
 
-ConnectMe is a microservice-based platform consisting of authentication, user management, account linking, and Discord integration services.
+This repository contains a small microservice suite used by the ConnectMe project. The following services are included (each service has its own README with more details):
 
-Each service contains its own README with implementation details.
+- [auth-service/README.md](auth-service/README.md) — Authentication: register, login, refresh tokens (port 9090)
+- [user-service/README.md](user-service/README.md) — User profiles (port 9091)
+- [account-linking-service/README.md](account-linking-service/README.md) — Account linking flow, Redis + Kafka (port 9093)
+- [discord-bot-service/README.md](discord-bot-service/README.md) — Discord bot that produces linking Kafka events (port 9094)
 
-## Quick Start
+Quick start
 
-Run the entire stack from the repository root:
+1. Create an `.env` (or export env vars) with required secrets, for example:
+
+```
+DB_USER=postgres
+DB_PASSWORD=postgres
+TOKEN_SIGNING_KEY=<base64-key>
+BOT_TOKEN=<discord-bot-token>
+```
+
+2. Run everything with Docker Compose from the repository root:
 
 ```bash
-docker compose up --build
+docker-compose up --build
 ```
 
-The API gateway will be available at:
+Services & infrastructure
 
-```
-http://localhost:8080
-```
+- PostgreSQL (db)
+- Redis (redis) — used by `account-linking-service` to store temporary codes
+- Kafka (broker) — used to propagate linking confirmation events between the Discord bot and the linking service
+- Nginx (nginx) — reverse proxy and CORS config, exposed on host port 8080
 
-## Architecture
+Environment variables
 
-### Infrastructure
+The `docker-compose.yml` contains the full list of environment variables used by services. Important ones:
 
-| Component  | Purpose                                                                 |
-| ---------- | ----------------------------------------------------------------------- |
-| PostgreSQL | Separate database for each service (`auth-db`, `user-db`, `linking-db`) |
-| Redis      | Temporary storage for account linking codes                             |
-| Kafka      | Event broker for account linking                                        |
-| Nginx      | Reverse proxy and CORS handling                                         |
+- `DB_USER`, `DB_PASSWORD` — Postgres credentials
+- `TOKEN_SIGNING_KEY` — Base64 signing key used to create JWT tokens in `auth-service`
+- `BOT_TOKEN` — Discord bot token for `discord-bot-service`
 
-### Services
+Endpoints summary
 
-| Service                 | Host Port |
-| ----------------------- | --------- |
-| auth-service            | 9090      |
-| user-service            | 9091      |
-| account-linking-service | 9093      |
-| discord-bot-service     | 9094      |
+Auth Service (`auth-service` — see [auth-service/README.md](auth-service/README.md))
 
-## Environment Variables
+- POST /api/auth/register — body: `{ username, email, password }` — register new user
+- POST /api/auth/login — body: `{ email, password }` — returns `{ accessToken, refreshToken }`
+- POST /api/auth/refresh — body: `{ refreshToken }` — returns `{ accessToken }`
 
-All required variables are defined in `docker-compose.yml`.
+User Service (`user-service` — see [user-service/README.md](user-service/README.md))
 
-Key variables:
+- GET /api/users/{username} — returns public profile `{ uuid, username, createdAt }`
 
-| Variable            | Description                                  |
-| ------------------- | -------------------------------------------- |
-| `AUTH_DB_*`         | Auth service database credentials            |
-| `USER_DB_*`         | User service database credentials            |
-| `LINK_DB_*`         | Account linking service database credentials |
-| `TOKEN_SIGNING_KEY` | JWT signing key                              |
-| `BOT_TOKEN`         | Discord bot token                            |
-| `SPRING_MAIL_*`     | Email configuration for auth-service         |
+Account Linking Service (`account-linking-service` — see [account-linking-service/README.md](account-linking-service/README.md))
 
-## API Overview
+- POST /api/linking?provider=<provider> — authenticated; returns `{ code }` (6-digit), code stored in Redis for ~5 minutes
+- GET /api/linking/links — authenticated; returns linked accounts for the user
+- Kafka topic `account.linking` — external providers (or the Discord bot) send `{ id, username, code, provider }` to confirm linking
 
-### Auth Service
+Discord Bot (`discord-bot-service` — see [discord-bot-service/README.md](discord-bot-service/README.md))
 
-| Method | Endpoint                             | Description                      |
-| ------ | ------------------------------------ | -------------------------------- |
-| POST   | `/api/auth/register`                 | Register a new user              |
-| POST   | `/api/auth/login`                    | Obtain access and refresh tokens |
-| POST   | `/api/auth/refresh`                  | Refresh access token             |
-| POST   | `/api/auth/email/verify?code=<code>` | Verify email address             |
+- Slash command `/link code:<code>` — the bot sends a Kafka event to `account.linking` with `{ id, username, code, provider: "discord" }` and replies `In process...`
 
-### User Service
+Notes & next steps
 
-| Method | Endpoint                | Description             |
-| ------ | ----------------------- | ----------------------- |
-| GET    | `/api/users/{username}` | Get public user profile |
-
-### Account Linking Service
-
-| Method | Endpoint                           | Description             |
-| ------ | ---------------------------------- | ----------------------- |
-| POST   | `/api/linking?provider=<provider>` | Generate a linking code |
-| GET    | `/api/linking/links`               | List linked accounts    |
-
-Kafka topic:
-
-```
-account.linking
-```
-
-Event payload:
-
-```json
-{
-  "id": "...",
-  "username": "...",
-  "code": "123456",
-  "provider": "discord"
-}
-```
-
-### Discord Bot
-
-Discord command:
-
-```text
-/link code:<code>
-```
-
-Publishes an event to the `account.linking` Kafka topic.
-
-
+- Each service directory contains a `Dockerfile` and `build.gradle.kts` — services build with Gradle and run inside containers in `docker-compose`.
+- For development you may build and run services individually using `./gradlew build` and `docker build` in each service folder.
+- If you want, I can: run `docker-compose up --build` to smoke-test, or commit these README files to git for you.
