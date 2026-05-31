@@ -1,4 +1,17 @@
 services:
+  db:
+    image: postgres:16
+    container_name: postgres_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: connectme_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
   auth-service:
     build: ./auth-service
     restart: unless-stopped
@@ -8,8 +21,12 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: broker:9092
       SPRING_KAFKA_CONSUMER_GROUP_ID: auth-group
       TOKEN_SIGNING_KEY: ${TOKEN_SIGNING_KEY}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/connectme_db
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
     depends_on:
       - broker
+      - db
 
   user-service:
     build: ./user-service
@@ -20,8 +37,12 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: broker:9092
       SPRING_KAFKA_CONSUMER_GROUP_ID: user-group
       TOKEN_SIGNING_KEY: ${TOKEN_SIGNING_KEY}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/connectme_db
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
     depends_on:
       - broker
+      - db
 
   discord-bot-service:
     build: ./discord-bot-service
@@ -47,9 +68,13 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       TOKEN_SIGNING_KEY: ${TOKEN_SIGNING_KEY}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/connectme_db
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
     depends_on:
       - broker
       - redis
+      - db
 
   broker:
     image: apache/kafka:4.2.0
@@ -91,3 +116,4 @@ services:
 
 volumes:
   redis:
+  pgdata:
