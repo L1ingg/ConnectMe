@@ -2,11 +2,6 @@
 
 This repository contains a small microservice suite used by the ConnectMe project. The following services are included (each service has its own README with more details):
 
-- [auth-service/README.md](auth-service/README.md) — Authentication: register, login, refresh tokens (port 9090)
-- [user-service/README.md](user-service/README.md) — User profiles (port 9091)
-- [account-linking-service/README.md](account-linking-service/README.md) — Account linking flow, Redis + Kafka (port 9093)
-- [discord-bot-service/README.md](discord-bot-service/README.md) — Discord bot that produces linking Kafka events (port 9094)
-
 Quick start
 
 1. Create an `.env` (or export env vars) with required secrets, for example:
