@@ -1,0 +1,12 @@
+[submodule "discord-bot-service"]
+	path = discord-bot-service
+	url = https://github.com/L1ingg/discord-bot-service.git
+[submodule "account-linking-service"]
+	path = account-linking-service
+	url = https://github.com/L1ingg/account-linking-service.git
+[submodule "user-service"]
+	path = user-service
+	url = https://github.com/L1ingg/user-service.git
+[submodule "auth-service"]
+	path = auth-service
+	url = https://github.com/L1ingg/auth-service.git
