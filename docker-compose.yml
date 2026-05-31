@@ -1,17 +1,4 @@
 services:
-  db:
-    image: postgres:16
-    container_name: postgres_db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: connectme_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
   auth-service:
     build: ./auth-service
     restart: unless-stopped
@@ -19,14 +6,23 @@ services:
       - "9090:8080"
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: broker:9092
-      SPRING_KAFKA_CONSUMER_GROUP_ID: auth-group
       TOKEN_SIGNING_KEY: ${TOKEN_SIGNING_KEY}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/connectme_db
-      SPRING_DATASOURCE_USERNAME: ${DB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/auth_db
+      SPRING_DATASOURCE_USERNAME: ${AUTH_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${AUTH_DB_PASSWORD}
+
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+
+      SPRING_MAIL_HOST: smtp.gmail.com
+      SPRING_MAIL_PORT: 587
+      SPRING_MAIL_USERNAME: ${MAIL_USERNAME}
+      SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD}
     depends_on:
       - broker
-      - db
+      - auth-db
+      - redis
 
   user-service:
     build: ./user-service
@@ -35,14 +31,14 @@ services:
       - "9091:8080"
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: broker:9092
-      SPRING_KAFKA_CONSUMER_GROUP_ID: user-group
       TOKEN_SIGNING_KEY: ${TOKEN_SIGNING_KEY}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/connectme_db
-      SPRING_DATASOURCE_USERNAME: ${DB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+
+      SPRING_DATASOURCE_URL: jdbc:postgresql://user-db:5432/user_db
+      SPRING_DATASOURCE_USERNAME: ${USER_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${USER_DB_PASSWORD}
     depends_on:
       - broker
-      - db
+      - user-db
 
   discord-bot-service:
     build: ./discord-bot-service
@@ -51,7 +47,6 @@ services:
       - "9094:8080"
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: broker:9092
-      SPRING_KAFKA_CONSUMER_GROUP_ID: bot-group
       BOT_TOKEN: ${BOT_TOKEN}
     depends_on:
       - broker
@@ -64,17 +59,18 @@ services:
       - "9093:8080"
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: broker:9092
-      SPRING_KAFKA_CONSUMER_GROUP_ID: linking-group
+      TOKEN_SIGNING_KEY: ${TOKEN_SIGNING_KEY}
+
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
-      TOKEN_SIGNING_KEY: ${TOKEN_SIGNING_KEY}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/connectme_db
-      SPRING_DATASOURCE_USERNAME: ${DB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+
+      SPRING_DATASOURCE_URL: jdbc:postgresql://linking-db:5432/linking_db
+      SPRING_DATASOURCE_USERNAME: ${LINK_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${LINK_DB_PASSWORD}
     depends_on:
       - broker
       - redis
-      - db
+      - linking-db
 
   broker:
     image: apache/kafka:4.2.0
@@ -93,7 +89,6 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-  
 
   nginx:
     image: nginx
@@ -103,17 +98,56 @@ services:
     ports:
       - "8080:80"
 
-
   redis:
     image: redis
+    container_name: redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
-    restart: unless-stopped
-    container_name: redis
     volumes:
       - redis:/data
 
+  auth-db:
+    image: postgres:16
+    container_name: auth_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${AUTH_DB_USER}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
+      POSTGRES_DB: auth_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - auth_pgdata:/var/lib/postgresql/data
+
+  user-db:
+    image: postgres:16
+    container_name: user_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${USER_DB_USER}
+      POSTGRES_PASSWORD: ${USER_DB_PASSWORD}
+      POSTGRES_DB: user_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - user_pgdata:/var/lib/postgresql/data
+
+  linking-db:
+    image: postgres:16
+    container_name: linking_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${LINK_DB_USER}
+      POSTGRES_PASSWORD: ${LINK_DB_PASSWORD}
+      POSTGRES_DB: linking_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - linking_pgdata:/var/lib/postgresql/data
 
 volumes:
   redis:
-  pgdata:
+  auth_pgdata:
+  user_pgdata:
+  linking_pgdata:
