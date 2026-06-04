@@ -1,11 +1,12 @@
 # ConnectMe — Project Overview
 
-This repository contains a small microservice suite used by the ConnectMe project. The following services are included (each service has its own README with more details):
+This repository contains a microservice suite used by the ConnectMe project. The following services are included (each service has its own README with more details):
 
 - [auth-service/README.md](auth-service/README.md) — Authentication: register, login, refresh tokens (port 9090)
 - [user-service/README.md](user-service/README.md) — User profiles (port 9091)
 - [account-linking-service/README.md](account-linking-service/README.md) — Account linking flow, Redis + Kafka (port 9093)
 - [discord-bot-service/README.md](discord-bot-service/README.md) — Discord bot that produces linking Kafka events (port 9094)
+- [frontend-service/README.md](frontend-service/README.md) — React-based frontend (port 3000)
 
 Quick start
 
@@ -26,10 +27,11 @@ docker-compose up --build
 
 Services & infrastructure
 
-- PostgreSQL (db)
+- PostgreSQL (db) — User and linking databases
 - Redis (redis) — used by `account-linking-service` to store temporary codes
 - Kafka (broker) — used to propagate linking confirmation events between the Discord bot and the linking service
 - Nginx (nginx) — reverse proxy and CORS config, exposed on host port 8080
+- Frontend (frontend-service) — React app served on port 3000
 
 Environment variables
 
@@ -60,6 +62,12 @@ Account Linking Service (`account-linking-service` — see [account-linking-serv
 Discord Bot (`discord-bot-service` — see [discord-bot-service/README.md](discord-bot-service/README.md))
 
 - Slash command `/link code:<code>` — the bot sends a Kafka event to `account.linking` with `{ id, username, code, provider: "discord" }` and replies `In process...`
+
+Frontend (`frontend-service` — see [frontend-service/README.md](frontend-service/README.md))
+
+- Served on `http://localhost:3000` (development) or port 3000 in production
+- Provides UI for user registration, login, and account linking
+- Communicates with backend services via API calls through Nginx proxy
 
 Notes & next steps
 
