@@ -6,7 +6,6 @@ This repository contains a microservice suite used by the ConnectMe project. The
 - [user-service/README.md](user-service/README.md) — User profiles (port 9091)
 - [account-linking-service/README.md](account-linking-service/README.md) — Account linking flow, Redis + Kafka (port 9093)
 - [discord-bot-service/README.md](discord-bot-service/README.md) — Discord bot that produces linking Kafka events (port 9094)
-- [frontend-service/README.md](frontend-service/README.md) — React-based frontend (port 3000)
 
 Quick start
 
@@ -62,12 +61,6 @@ Account Linking Service (`account-linking-service` — see [account-linking-serv
 Discord Bot (`discord-bot-service` — see [discord-bot-service/README.md](discord-bot-service/README.md))
 
 - Slash command `/link code:<code>` — the bot sends a Kafka event to `account.linking` with `{ id, username, code, provider: "discord" }` and replies `In process...`
-
-Frontend (`frontend-service` — see [frontend-service/README.md](frontend-service/README.md))
-
-- Served on `http://localhost:3000` (development) or port 3000 in production
-- Provides UI for user registration, login, and account linking
-- Communicates with backend services via API calls through Nginx proxy
 
 Notes & next steps
 
