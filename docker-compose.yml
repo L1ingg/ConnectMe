@@ -40,6 +40,22 @@ services:
       - broker
       - user-db
 
+  account-linking-service:
+    build: ./account-linking-service
+    restart: unless-stopped
+    ports:
+      - "9093:8080"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: broker:9092
+      TOKEN_SIGNING_KEY: ${TOKEN_SIGNING_KEY}
+
+      SPRING_DATASOURCE_URL: jdbc:postgresql://link-db:5432/link_db
+      SPRING_DATASOURCE_USERNAME: ${LINK_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${LINK_DB_PASSWORD}
+    depends_on:
+      - broker
+      - link-db
+
   broker:
     image: apache/kafka:4.2.0
     restart: unless-stopped
@@ -88,6 +104,19 @@ services:
     volumes:
       - auth_pgdata:/var/lib/postgresql/data
 
+  link-db:
+    image: postgres:16
+    container_name: link_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${LINK_DB_USER}
+      POSTGRES_PASSWORD: ${LINK_DB_PASSWORD}
+      POSTGRES_DB: link-db
+    ports:
+      - "5435:5432"
+    volumes:
+      - link_pgdata:/var/lib/postgresql/data
+
   user-db:
     image: postgres:16
     container_name: user_db
@@ -106,3 +135,4 @@ volumes:
   redis:
   auth_pgdata:
   user_pgdata:
+  link_pgdata:
