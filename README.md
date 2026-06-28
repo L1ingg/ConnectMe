@@ -30,7 +30,6 @@ Services & infrastructure
 - Redis (redis) — used by `account-linking-service` to store temporary codes
 - Kafka (broker) — used to propagate linking confirmation events between the Discord bot and the linking service
 - Nginx (nginx) — reverse proxy and CORS config, exposed on host port 8080
-- Frontend (frontend-service) — React app served on port 3000
 
 Environment variables
 
